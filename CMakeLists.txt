@@ -12,9 +12,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core SerialPort Network)
 
-include_directories(${CMAKE_SOURCE_DIR}/DobotDll)
-
 include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# Add DobotDll
+add_subdirectory(dobot)
+
 
 file(GLOB SOURCES
     main.cpp
@@ -35,17 +37,8 @@ target_link_libraries(demo
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::SerialPort
     Qt${QT_VERSION_MAJOR}::Network
+    DobotDll
 )
-target_link_libraries(demo
-    ${CMAKE_SOURCE_DIR}/DobotDll/DobotDll.lib
-)
-
-add_custom_command(TARGET demo POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/DobotDll/DobotDll.dll
-    $<TARGET_FILE_DIR:demo>
-)
-
 
 # Install rules
 include(GNUInstallDirs)

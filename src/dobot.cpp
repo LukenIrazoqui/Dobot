@@ -22,20 +22,19 @@ void Dobot::connect()
 {
     char fwType[20];
     char version[20];
+    float time;
     //connect dobot
     if (!is_connected) {
-        if (ConnectDobot(portName, 115200, fwType, version, &dobotId) != DobotConnect_NoError) {
+        if (ConnectDobot(portName, 115200, fwType, version, &time) != DobotConnect_NoError) {
             std::cout << "Connect dobot error!!!";
             return;
         }
-        std::cout << "dobotId" << dobotId;
         is_connected = true;
         init();
 
         std::cout << "connect success!!!";
     } else {
         is_connected = false;
-        DisconnectDobot(dobotId);
     }
 }
 
@@ -43,7 +42,7 @@ void Dobot::connect()
 void Dobot::disconnect()
 {
     if (!is_connected) {
-        if (DisconnectDobot(dobotId) != DobotConnect_NoError) {
+        if (DisconnectDobot() != DobotConnect_NoError) {
             std::cout << "Disconnect dobot error!!!";
             return;
         }
@@ -59,7 +58,7 @@ Pose Dobot::getPose()
 {
     Pose pose;
 
-    while (GetPose(dobotId, &pose) != DobotCommunicate_NoError) {
+    while (GetPose(&pose) != DobotCommunicate_NoError) {
     }
 
     return pose;
@@ -68,61 +67,61 @@ Pose Dobot::getPose()
 void Dobot::init()
 {
     //Command timeout
-    SetCmdTimeout(dobotId, 3000);
+    SetCmdTimeout(3000);
 
     //clear old commands and set the queued command running
-    SetQueuedCmdClear(dobotId);
-    SetQueuedCmdStartExec(dobotId);
+    SetQueuedCmdClear();
+    SetQueuedCmdStartExec();
 
-    GetDeviceSN(dobotId, deviceSN, sizeof(deviceSN));
+    GetDeviceSN(deviceSN, sizeof(deviceSN));
 
-    GetDeviceName(dobotId, deviceName, sizeof(deviceName));
+    GetDeviceName(deviceName, sizeof(deviceName));
 
-    GetDeviceVersion(dobotId, &majorVersion, &minorVersion, &revision);
+    GetDeviceVersion(&majorVersion, &minorVersion, &revision, &hwVersion);
 
     //set the end effector parameters
     EndEffectorParams endEffectorParams;
     memset(&endEffectorParams, 0, sizeof(endEffectorParams));
     endEffectorParams.xBias = 71.6f;
-    SetEndEffectorParams(dobotId, &endEffectorParams, false, NULL);
+    SetEndEffectorParams(&endEffectorParams, false, NULL);
 
     JOGJointParams jogJointParams;
     for (int i = 0; i < 4; i++) {
         jogJointParams.velocity[i] = 100;
         jogJointParams.acceleration[i] = 100;
     }
-    SetJOGJointParams(dobotId, &jogJointParams, false, NULL);
+    SetJOGJointParams(&jogJointParams, false, NULL);
 
     JOGCoordinateParams jogCoordinateParams;
     for (int i = 0; i < 4; i++) {
         jogCoordinateParams.velocity[i] = 100;
         jogCoordinateParams.acceleration[i] = 100;
     }
-    SetJOGCoordinateParams(dobotId, &jogCoordinateParams, false, NULL);
+    SetJOGCoordinateParams(&jogCoordinateParams, false, NULL);
 
     JOGCommonParams jogCommonParams;
     jogCommonParams.velocityRatio = 50;
     jogCommonParams.accelerationRatio = 50;
-    SetJOGCommonParams(dobotId, &jogCommonParams, false, NULL);
+    SetJOGCommonParams(&jogCommonParams, false, NULL);
 
     PTPJointParams ptpJointParams;
     for (int i = 0; i < 4; i++) {
         ptpJointParams.velocity[i] = 100;
         ptpJointParams.acceleration[i] = 100;
     }
-    SetPTPJointParams(dobotId, &ptpJointParams, false, NULL);
+    SetPTPJointParams(&ptpJointParams, false, NULL);
 
     PTPCoordinateParams ptpCoordinateParams;
     ptpCoordinateParams.xyzVelocity = 100;
     ptpCoordinateParams.xyzAcceleration = 100;
     ptpCoordinateParams.rVelocity = 100;
     ptpCoordinateParams.rAcceleration = 100;
-    SetPTPCoordinateParams(dobotId, &ptpCoordinateParams, false, NULL);
+    SetPTPCoordinateParams(&ptpCoordinateParams, false, NULL);
 
     PTPJumpParams ptpJumpParams;
     ptpJumpParams.jumpHeight = 20;
     ptpJumpParams.zLimit = 150;
-    SetPTPJumpParams(dobotId, &ptpJumpParams, false, NULL);
+    SetPTPJumpParams(&ptpJumpParams, false, NULL);
 }
 
 
@@ -152,21 +151,21 @@ void Dobot::sendPTP(s_POSITION position, PTPMode mode)
     ptpCmd.z = position.Z;
     ptpCmd.r = position.R;
 
-    while (SetPTPCmd(dobotId, &ptpCmd, true, NULL) != DobotCommunicate_NoError) {
+    while (SetPTPCmd(&ptpCmd, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 
 
 void Dobot::initColorSensor(ColorPort colorPort)
 {
-    while (SetColorSensor(dobotId, true, colorPort) != DobotCommunicate_NoError) {
+    while (SetColorSensor(true, colorPort, COLOR_VERSION) != DobotCommunicate_NoError) {
     }
     this->colorPort = colorPort;
 }
 
 void Dobot::initInfraredSensor(InfraredPort infraredPort)
 {
-    while (SetInfraredSensor(dobotId,true, infraredPort) != DobotCommunicate_NoError) {
+    while (SetInfraredSensor(true, infraredPort, INFRARED_VERSION) != DobotCommunicate_NoError) {
     }
     this->infraredPort = infraredPort;
 }
@@ -176,7 +175,7 @@ Dobot::e_COLOR Dobot::getColorSensor()
 {
     uint8_t r, g, b;
 
-    while (GetColorSensor(dobotId, &r, &g, &b) != DobotCommunicate_NoError) {
+    while (GetColorSensor(&r, &g, &b) != DobotCommunicate_NoError) {
     }
 
     // Check the color detected
@@ -198,7 +197,7 @@ bool Dobot::getInfraredSensor()
 {
     uint8_t value;
 
-    while (GetInfraredSensor(dobotId, infraredPort, &value) != DobotCommunicate_NoError) {
+    while (GetInfraredSensor(infraredPort, &value) != DobotCommunicate_NoError) {
     }
 
     return value == 1;
@@ -232,7 +231,7 @@ void Dobot::setEMotorSpeed(int32_t speed)
 
 void Dobot::setEMotor()
 {
-    while (SetEMotor(dobotId, &eMotor, true, NULL) != DobotCommunicate_NoError) {
+    while (SetEMotor(&eMotor, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 
@@ -260,7 +259,7 @@ void Dobot::goHome()
 {
     HOMECmd homeCmd;
     homeCmd.reserved = true;
-    while (SetHOMECmd(dobotId, &homeCmd, true, NULL) != DobotCommunicate_NoError) {
+    while (SetHOMECmd(&homeCmd, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 
@@ -272,19 +271,19 @@ void Dobot::setHome(s_POSITION position)
     homeParams.z = position.Z;
     homeParams.r = position.R;
 
-    while (SetHOMEParams(dobotId, &homeParams, true, NULL) != DobotCommunicate_NoError) {
+    while (SetHOMEParams(&homeParams, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 
 void Dobot::enableSuctionCup()
 {
-    while (SetEndEffectorSuctionCup(dobotId, true, true, true, NULL) != DobotCommunicate_NoError) {
+    while (SetEndEffectorSuctionCup(true, true, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 
 void Dobot::disableSuctionCup()
 {
-    while (SetEndEffectorSuctionCup(dobotId, true, false, true, NULL) != DobotCommunicate_NoError) {
+    while (SetEndEffectorSuctionCup(true, false, true, NULL) != DobotCommunicate_NoError) {
     }
 }
 

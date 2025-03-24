@@ -64,14 +64,15 @@ private:
     void init();
     void setEMotor();
 
-    int dobotId;
     bool is_connected;
     const char *portName;
-    uint8_t majorVersion, minorVersion, revision;
+    uint8_t majorVersion, minorVersion, revision, hwVersion;
     char deviceName[64];
     char deviceSN[64];
 
+    uint8_t COLOR_VERSION;
     ColorPort colorPort;
+    uint8_t INFRARED_VERSION;
     InfraredPort infraredPort;
     EMotor eMotor;
 };
