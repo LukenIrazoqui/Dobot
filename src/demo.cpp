@@ -35,6 +35,7 @@ void Demo::exec()
         std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(5000));
     }
 
+    boxCount = 0;
 
     startMotor();
 
